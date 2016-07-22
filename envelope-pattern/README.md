@@ -27,6 +27,6 @@ Here you'll find the supporting code and examples for the Progressive Transforma
 ##Progressive Transformation with the Envelope Pattern tutorial examples
 <ol>
 <li>Open Query Console:  http://localhost:8000
-<li>Import the "envelope-pattern.xml" Query Console workspace from the <a href="https://github.com/MarkLogicUniversity/OnDemand/tree/master/envelope-pattern"</a> folder.  
+<li>Import the "envelope-pattern.xml" Query Console workspace from the https://github.com/MarkLogicUniversity/OnDemand/tree/master/envelope-pattern folder.  
 <li>Follow along with the "Progressive Transformation with the Envelope Pattern" On Demand tutorial found here:  http://mlu.marklogic.com/ondemand/
 </ol>
