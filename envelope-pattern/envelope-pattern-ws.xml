@@ -1,0 +1,194 @@
+<export><workspace name="Envelope Transform"><query name="Customers" focus="true" active="true" content-source="as:6618302011613974760:" mode="javascript">// Insert the customer documents after exporting from
+//  SQL to JSON, Add the document to a 
+//  collection called "transform" for progressive
+//  transformations
+
+declareUpdate();
+var custDocSysA = {	"ID" : 1001 ,
+	"Fname" : "Paul" ,
+	"Lname" : "Jackson" ,
+	"Phone" : "415-555-1212 | 415-555-1234" ,
+	"SSN" : "123-45-6789" ,
+	"Addr" : "123 Avenue Road" ,
+	"City" : "San Francisco" ,
+	"State" : "CA" ,
+	"Zip" : 94111 };
+
+var custDocSysB = {	"customerId" : 2001 ,
+	"givenName" : "Karen" ,
+	"familyName" : "Bender" ,
+	"shippingAddress" : {
+		"street" : "324 Some Road" ,
+		"city" : "San Francisco" ,
+		"state" : "CA" ,
+		"postal" : "94070" ,
+		"country" : "USA" } ,
+	"billingAddress" : {
+		"street" : "847 Some Road" ,
+		"city" : "San Francisco" ,
+		"state" : "CA" ,
+		"postal" : "94111" ,
+		"country" : "USA" } ,
+	"phone" : [ 
+		{ "type" : "Home" , 
+			"number" : "415-555-6789" } ,
+		{ "type" : "Mobile" ,
+			"number" : "415-555-6789" } 
+  ] 
+};
+
+xdmp.documentInsert("/customers/pjackson.json", custDocSysA, xdmp.defaultPermissions(),["transform"]);
+xdmp.documentInsert("/customers/kbender.json", custDocSysB, xdmp.defaultPermissions(),["transform"]);</query><query name="Order" focus="false" active="true" content-source="as:6618302011613974760:" mode="javascript">// Insert Order Document and add to "transform"
+//  collection
+
+declareUpdate();
+
+var orderDoc = { "orderId" : 8001 ,
+	"customerId" : 2001 ,
+	"orderDate" : "2016-04-01" ,
+	"fulfillmentDate" : "2016-04-04" ,
+	"lineItems" : [
+		{ "productId" : 7001 , "quantity" : 1 , "price" : "$2000" } ,
+		{ "productId" : 7002 , "quantity" : 2 , "price" : "$39" } ] };
+
+xdmp.documentInsert("/orders/order8001.json", orderDoc, xdmp.defaultPermissions(),["transform"]);</query><query name="Products" focus="false" active="true" content-source="as:6618302011613974760:" mode="javascript">// Insert a couple of product documents
+//  Also add these to the "transform" collection
+
+declareUpdate();
+
+var prodDoc1 = {	"productId" : 7001 ,
+	"title" : "Nice Laptop" ,
+	"description" : "A really nice laptop" ,
+	"supplier" : "Laptops'r'us" ,
+	"supplierId" : "LRU2391" ,
+	"price" : "$2200" };
+
+var prodDoc2 = {	"productId" : 7002 ,
+	"title" : "Power Supply" ,
+	"description" : "Laptop Power Supply" ,
+	"supplier" : "Laptops'r'us" ,
+	"supplierId" : "LRU2392" ,
+	"price" : "$39" };
+
+xdmp.documentInsert("/products/product7001", prodDoc1, xdmp.defaultPermissions(),["instock", "transform"]);
+xdmp.documentInsert("/products/product7002", prodDoc2, xdmp.defaultPermissions(),["instock", "transform"]);</query><query name="Add Envelope" focus="false" active="true" content-source="as:6618302011613974760:" mode="javascript">// Transform the orginal JSON.
+// Store the original doc in a JSON property called 
+//    "source"
+// Create an "envelope" JSON property to store 
+//    canonical data for application queries
+
+declareUpdate();
+
+// get all documents from the "transform"
+//  collection
+var docs = fn.collection("transform");
+for (var doc of docs) {
+  var transformed = {};
+  //add a property as an empty object to
+  //  add further data to the orginal document
+  transformed.envelope = {};
+  //save the original document in a new
+  //  property called "source"
+  transformed.source = doc;
+  xdmp.nodeReplace(doc, transformed);
+}
+
+</query><query name="Promote data" focus="false" active="true" content-source="as:6618302011613974760:" mode="javascript">// Continue to enhance the customer document by adding
+//  information yet keeping the original data intact.
+
+declareUpdate();
+
+// return the customer document
+var doc= cts.doc("/customers/pjackson.json");
+var transformed = doc.toObject();
+// promote canonical data to the "envelope"
+//  property. We are adding postal codes to 
+//  a more consistent search field called "zipCode"
+transformed.envelope.zipCode = 94111;
+xdmp.nodeReplace(doc, transformed);
+
+doc= cts.doc("/customers/kbender.json");
+transformed = doc.toObject();
+// Promote the Postal code to the more
+//  canonical field of "zipCode"
+transformed.envelope.zipCode = [94070, 94111];
+xdmp.nodeReplace(doc, transformed);</query><query name="Add Provenance and Lineage" focus="false" active="true" content-source="as:6618302011613974760:" mode="javascript">// Add provenance and lineage information to the
+//  customer document.
+
+declareUpdate();
+
+// get the customer document
+var doc= cts.doc("/customers/pjackson.json");
+var transformed = doc.toObject();
+// add provenance that this customer orginated from
+//  System A rather than System B and the date imported.
+// also add in lineage information.
+transformed.metadata = 
+  { "provenance" : {
+      "source" : "System A",
+      "date" : "2016-04-17" },
+    "lineage" : "v01 transform" };
+xdmp.nodeReplace(doc, transformed);
+
+// get the customer document
+doc= cts.doc("/customers/kbender.json");
+transformed = doc.toObject();
+// add provenance that this customer orginated from
+//  System B rather than System A and the date imported.
+// also add in lineage information.
+transformed.metadata = 
+  { "provenance" : {
+      "source" : "System B",
+      "date" : "2016-04-17" },
+    "lineage" : "v01 transform" };
+xdmp.nodeReplace(doc, transformed);</query><query name="Show Parts" focus="false" active="true" content-source="as:6618302011613974760:" mode="javascript">//All data in the documents are accessible
+//  including the original data.
+
+//Accessing the customer doc, each part
+//  can be returned separately including
+//  the original document.
+var doc= cts.doc("/customers/kbender.json");
+var docParts = new Array();
+docParts.push(doc.root.metadata);
+docParts.push(doc.root.envelope);
+docParts.push(doc.root.source);
+docParts;</query><query name="Add Triples" focus="false" active="true" content-source="as:6618302011613974760:" mode="javascript">// Add triples to the order document
+declareUpdate();
+
+// Add semantic data to the order document tracking
+//  the customer and the products in the order.
+var doc= cts.doc("/orders/order8001.json");
+var transformed = doc.toObject();
+transformed.triples = 
+  [
+		{ "triple" : { "subject" : "Customer2001" , "predicate" : "placed" , "object" : "Order8001" } } ,
+		{ "triple" : { "subject" : "Order8001" , "predicate" : "contains" , "object" : "Product7001" } } ,
+		{ "triple" : { "subject" : "Order8001" , "predicate" : "contains" , "object" : "Product7002" } } ];
+transformed.envelope.orderDate = "2016-04-01";
+transformed.metadata = 
+  { "provenance" : {
+      "source" : "System B",
+      "date" : "2016-04-17" },
+    "lineage" : "v02 transform" };
+transformed.source = doc;
+xdmp.nodeReplace(doc, transformed);</query><query name="SPARQL Query Orders" focus="false" active="true" content-source="as:6618302011613974760:" mode="sparql">SELECT ?customer
+WHERE {
+?customer &lt;placed&gt; ?order .
+?order &lt;contains&gt; &lt;Product7002&gt; .
+}
+</query><query name="Add New Relationship" focus="false" active="true" content-source="as:6618302011613974760:" mode="javascript">declareUpdate();
+var sem = require("/MarkLogic/semantics.xqy");
+
+//Create new ontology triples to define a new
+//  relationship between customers and products
+//  called "bought".
+var sparql = 'CONSTRUCT { ?customer &lt;bought&gt; ?product}';
+sparql +=    'WHERE \{';
+sparql +=    '?customer &lt;placed&gt; ?order .';
+sparql +=    '?order &lt;contains&gt; ?product . \}';
+
+var triples = sem.sparql(sparql);
+sem.rdfInsert(triples);
+</query><query name="SPARQL Query New Relation" focus="false" active="true" content-source="as:6618302011613974760:" mode="sparql">SELECT ?customer
+WHERE { ?customer &lt;bought&gt; &lt;Product7002&gt; }
+</query></workspace></export>
