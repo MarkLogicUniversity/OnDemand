@@ -15,7 +15,7 @@ Here you'll find the supporting code and examples for the Alerting Applications 
 ##Setup the Database for the Examples
 <ol>
 <li>With MarkLogic Server setup and running, open Query Console:  http://localhost:8000
-<li>Import the "Alerting-Applications.xml" Query Console workspace from the <a href="https://github.com/MarkLogicUniversity/AlertApps/tree/master/Setup">AlertApps/Setup</a> folder
+<li>Import the "Alerting-Applications.xml" Query Console workspace from the <a href="https://github.com/MarkLogicUniversity/OnDemand/tree/master/AlertApps/Setup">AlertApps/Setup</a> folder
 <li>Copy the alert-app-tutorial folder to the /Samples folder within the MarkLogic installation folder
   <ol>
     <li>Windows installation folder, c:\Program Files\MarkLogic\
