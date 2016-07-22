@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bookstore>
+<book category="cooking">
+  <isbn>9781400052585</isbn>
+  <title lang="en">Everyday Italian</title>
+  <author>Giada De Laurentiis</author>
+  <year>2005</year>
+  <price>30.00</price>
+</book>
+<book category="children">
+  <isbn>0-7475-3269-9</isbn>
+  <title lang="en">Harry Potter</title>
+  <author>J K. Rowling</author>
+  <year>2005</year>
+  <price>29.99</price>
+</book>
+<book category="web">
+  <isbn>780672324796</isbn>
+  <title lang="en">XQuery Kick Start</title>
+  <author>James McGovern</author>
+  <author>Per Bothner</author>
+  <author>Kurt Cagle</author>
+  <author>James Linn</author>
+  <author>Vaidyanathan Nagarajan</author>
+  <year>2003</year>
+  <price>49.99</price>
+</book>
+<book category="web">
+  <isbn>9781449301170</isbn>
+  <title lang="en">Learning XML</title>
+  <author>Erik T. Ray</author>
+  <year>2003</year>
+  <price>39.95</price>
+</book>
+<book category="english classics">
+  <isbn>9781495932793</isbn>
+  <title lang="en">The Pickwick Papers</title>
+  <author>Charles Dickens</author>
+  <year>1836</year>
+  <price>9.95</price>
+</book>
+<book category="english classics">
+  <isbn>9780333546079</isbn>
+  <title lang="en">Great Expectations</title>
+  <author>Charles Dickens</author>
+  <year>1860</year>
+  <price>12.95</price>
+</book>
+<book category="american classics">
+  <isbn>9788460767923</isbn>
+  <title lang="en">Moby Dick</title>
+  <author>Herman Melville</author>
+  <year>1851</year>
+  <price>16.95</price>
+</book>
+</bookstore>

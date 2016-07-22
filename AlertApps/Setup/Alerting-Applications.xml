@@ -1,0 +1,382 @@
+<export><workspace name="Alerting Applications"><query name="Deploy Project" focus="false" active="true" content-source="as:3352851355567806690:" mode="javascript">// Configure script for the alerting application tutorial
+var admin = require("/MarkLogic/admin.xqy");
+  
+// create forest for our content database
+  
+  var config = admin.getConfiguration();
+  config = admin.forestCreate(
+    config, 
+    "bookstore-01",
+    xdmp.host(), 
+    "");
+  admin.saveConfiguration(config);
+  
+// create forest for our triggers database
+  config = admin.getConfiguration();
+  config = admin.forestCreate(
+    config, 
+    "bookstore-triggers-01",
+    xdmp.host(), 
+    "");
+  admin.saveConfiguration(config);
+  
+// create our content database
+  config = admin.getConfiguration();
+  config = admin.databaseCreate(
+    config,
+    "bookstore",
+    xdmp.database("Security"),
+    xdmp.database("Schemas"));
+  admin.saveConfiguration(config);
+  
+// create our triggers database
+  config = admin.getConfiguration();
+  config = admin.databaseCreate(
+    config,
+    "bookstore-triggers",
+    xdmp.database("Security"),
+    xdmp.database("Schemas"));
+  admin.saveConfiguration(config);
+  
+// attach content forest to content database
+  config = admin.getConfiguration();
+  config = admin.databaseAttachForest(
+    config,
+    xdmp.database("bookstore"), 
+    xdmp.forest("bookstore-01"));
+  admin.saveConfiguration(config);
+
+// attach triggers forest to triggers database
+  config = admin.getConfiguration();
+  config = admin.databaseAttachForest(
+    config,
+    xdmp.database("bookstore-triggers"), 
+    xdmp.forest("bookstore-triggers-01"));
+  admin.saveConfiguration(config);
+
+// set fast reverse search in the bookstore database
+  config = admin.getConfiguration();
+  config = admin.databaseSetFastReverseSearches(config, 
+     xdmp.database("bookstore"), fn.true());
+  admin.saveConfiguration(config);
+  
+// configure content database to have this trigger database
+  config = admin.getConfiguration();
+  config = admin.databaseSetTriggersDatabase(
+    config,
+    xdmp.database("bookstore"), 
+    xdmp.database("bookstore-triggers"));
+  admin.saveConfiguration(config);
+  
+// HTTP application server
+  config = admin.getConfiguration();
+  var groupid = admin.groupGetId(config, "Default");
+  var server = admin.httpServerCreate(
+    config, 
+    groupid,
+    "6020-bookstore-HTTP", 
+    "Samples/alert-app-tutorial/src",
+    6020,
+	0,
+    admin.databaseGetId(config, "bookstore"));
+  admin.saveConfiguration(server);
+  
+// Finished
+  "Deployment Script Completed";</query><query name="Load Data" focus="false" active="true" content-source="as:5272100067857847198:" mode="javascript">// Load our tutorial sample books into the
+//  bookstore database
+
+// Note: set the Query Console
+//  Content Source to 'bookstore'
+
+declareUpdate();
+  
+if (xdmp.databaseName(xdmp.database()) != "bookstore") {
+  "Please set Content Source to 'bookstore (file: Samples/alert-app-tutorial/src)' before running this code."; 
+} else {
+  var documentLoadPath = "./Samples/alert-app-tutorial/data/bookstore.xml";
+  var booksDoc = xdmp.documentGet(documentLoadPath).next().value;
+  // books are in a single XML document.
+  // each book is in a child &lt;book&gt; node.
+  // for better data modeling, break out each
+  //  child book node into a separate document.
+  var books = booksDoc.xpath("//book");
+
+  // iterate through all the &lt;book&gt; nodes
+  for (var book of books) {
+    // get the isbn value from the XML element.
+    var isbn = book.xpath(".//isbn/string()");
+    // get the author value from the XML element.
+    // there could be multiple author elements so
+    //  if there are, get all the values concatenated.
+    var authors = book.xpath(".//author/string()").toArray().join("");
+    // create a URI for this document in the pattern of
+    //  ' /books/&lt;first 10 chars of the author + isbn&gt;.xml '.
+    var uri = authors.substr(0, 10) + isbn
+    // make sure only alphanumeric characters for
+    //  the document name.
+    uri = "/books/" + uri.replace(/[^a-zA-Z0-9]/g, '') + ".xml";
+
+    xdmp.documentInsert(uri, book);
+  };
+  
+  "Data load complete.";
+}
+</query><query name="Create Alert Config" focus="false" active="true" content-source="as:5272100067857847198:" mode="javascript">// Create the Alert API Configuration
+
+// Note: set the Query Console
+//  Content Source to 'bookstore'
+
+declareUpdate();
+
+if (xdmp.databaseName(xdmp.database()) != "bookstore") {
+  "Please set Content Source to 'bookstore (file: Samples/alert-app-tutorial/src)' before running this code."; 
+} else {
+  
+  var alert = require("/MarkLogic/alert.xqy");
+
+  // create an Alert Configuration XML for the
+  //  Alerting Sample web application
+  // Alert configurations have the following
+  //  arguements:
+  //  URI - a URI that uniquely identifies this
+  //        alert api configuration
+  //  Name - a string value for a name or label
+  //         for this configuration
+  //  Description - a string description for 
+  //                this configuration
+  //  Options - a JavaScript Object containing
+  //            any options
+  var alertConfig = alert.makeConfig(
+   "http://marklogic.com/mlu/alert/app/sample/uri",   
+   "Alerting Sample Tutorial",   
+   "Alerting config for the Alert Sample tutorial",   
+   {});
+  alert.configInsert(alertConfig);
+
+  "Alert configuration created successfully.";
+}</query><query name="Create Alert Action" focus="false" active="true" content-source="as:5272100067857847198:" mode="javascript">// Create the Alert API Action
+// For the tutorial, the action will create
+//  a test document in the bookstore database
+//  with a sample email message
+// The test document URIs will be in pattern of
+//  "/alert-test/&lt;current date-time&gt;.xml"
+
+// Note: set the Query Console
+//  Content Source to 'bookstore'
+
+declareUpdate();
+
+if (xdmp.databaseName(xdmp.database()) != "bookstore") {
+  "Please set Content Source to 'bookstore (file: Samples/alert-app-tutorial/src)' before running this code."; 
+} else {
+  var alert = require("/MarkLogic/alert.xqy");
+
+  // create an Alert Action XML for the
+  //  Alerting Sample web application
+  // Alert Actions have the following
+  //  arguements:
+  //  Name - a string value for a name or label
+  //         for this configuration. will be part
+  //         of the inserted action XML uri
+  //  Description - a string description for 
+  //                this configuration
+  //  Modules DB - the database ID of the modules
+  //               database where the XQuery
+  //               module implementing the action
+  //               is located
+  //  Root - The root URI of the XQuery module
+  //  Module URI - The URI of the XQuery module
+  //               that implements the action
+  //  Options - a JavaScript Object containing
+  //            any options
+  var action = alert.makeAction("Email-Updates",
+            "Email bookstore updates to interested customers",     
+            0,  
+            xdmp.modulesRoot(),  //modules root
+            "/email.xqy",     
+            {}); 
+  var uri = "http://marklogic.com/mlu/alert/app/sample/uri";
+  alert.actionInsert(uri, action);
+
+  "Alert Action created successfully.";
+}</query><query name="Test Rule" focus="false" active="true" content-source="as:5272100067857847198:" mode="javascript">// Invoke the Bookstore test rule
+// Before running this code, ensure the 
+//  bookstore interest form was filled out
+//  and submitted. This creates the rule
+//  to invoke here.
+
+// Note: set the Query Console
+//  Content Source to 'bookstore'
+
+if (xdmp.databaseName(xdmp.database()) != "bookstore") {
+  "Please set Content Source to 'bookstore (file: Samples/alert-app-tutorial/src)' before running this code."; 
+} else {
+  var alert = require("/MarkLogic/alert.xqy");
+  var alertUri = "http://marklogic.com/mlu/alert/app/sample/uri";
+  var testDoc =
+    '&lt;book category="english classics"&gt;   \
+      &lt;isbn&gt;9780451522375&lt;/isbn&gt;          \
+      &lt;title lang="en"&gt;Billy Budd&lt;/title&gt; \
+      &lt;author&gt;Herman Melville&lt;/author&gt;    \
+      &lt;year&gt;1888&lt;/year&gt;                   \
+      &lt;price&gt;11.95&lt;/price&gt;                \
+    &lt;/book&gt;';
+
+  alert.invokeMatchingActions(alertUri, xdmp.unquote(testDoc), {});
+  
+  "Rule test complete.";
+
+}</query><query name="Configure CPF" focus="false" active="true" content-source="1925462981131179956:0:Apps" mode="javascript">// Begin configuring Content Processing (CPF) for
+//  the "bookstore" database.
+// In this code, install the 2 needed pipelines; 
+//  Alerting and Status Change Handling.
+// For more information on Content Processing, 
+//  please see the Content Processing Framework Guide
+//  at docs.marklogic.com
+
+// Note: set the Query Console
+//  Content Source to 'bookstore-triggers'
+
+declareUpdate();
+
+if (xdmp.databaseName(xdmp.database()) != "bookstore-triggers") {
+  "Please set Content Source to 'bookstore-triggers' before running this code."; 
+} else {
+//  var dom = require("/MarkLogic/cpf/domains.xqy");
+  var p = require("/MarkLogic/cpf/pipelines.xqy"); 
+
+  var alertingPipeline = xdmp.documentGet("Installer/alert/alerting-pipeline.xml");
+  var statusPipeline = xdmp.documentGet("Installer/cpf/status-pipeline.xml");
+  p.insert(alertingPipeline);
+  p.insert(statusPipeline);
+
+  "Content Processing Framework Alerting and Status Pipelines configured."
+}</query><query name="Configure Domain" focus="false" active="true" content-source="1925462981131179956:0:Apps" mode="javascript">// Configure the CPF Domain
+// The Domain will determine what content will
+//  be sent to the Alerting Pipeline
+
+// Note: set the Query Console
+//  Content Source to 'bookstore-triggers'
+
+declareUpdate();
+
+if (xdmp.databaseName(xdmp.database()) != "bookstore-triggers") {
+  "Please set Content Source to 'bookstore-triggers' before running this code."; 
+} else {
+  var dom = require("/MarkLogic/cpf/domains.xqy");
+  var p = require("/MarkLogic/cpf/pipelines.xqy"); 
+
+  var domain = dom.domainScope("directory", "/books/", "infinity");
+  var evalContext = dom.evaluationContext(xdmp.database("Modules"), "/");
+  var perms = null;
+  
+  dom.create(
+    "Alert Book Customers",                              
+    "Alert about new books of interest",                       
+    domain,                                                    
+    evalContext,                                               
+    [p.get("Status Change Handling").xpath("//p:pipeline-id"), 
+     p.get("Alerting").xpath("//p:pipeline-id")],              
+    perms);
+    
+  "Content Processing Framework Domain configured."
+}</query><query name="Configure CPF Restart" focus="false" active="true" content-source="1925462981131179956:0:Apps" mode="javascript">// Complete the CPF configuration by
+//  creating a restart trigger for CPF to
+//  restart the content processing in case
+//  of server outages or processing errors.
+
+// Note: set the Query Console
+//  Content Source to 'bookstore-triggers'
+
+declareUpdate();
+
+if (xdmp.databaseName(xdmp.database()) != "bookstore-triggers") {
+  "Please set Content Source to 'bookstore-triggers' before running this code."; 
+} else {
+
+  var alert = require("/MarkLogic/alert.xqy");
+  var dom = require("/MarkLogic/cpf/domains.xqy");
+  var p = require("/MarkLogic/cpf/pipelines.xqy"); 
+
+  dom.configurationCreate( 
+    "admin", 
+    dom.evaluationContext( xdmp.database("Modules"), "/" ),
+    dom.get("Alert Book Customers").xpath("//dom:domain-id"), 
+    (xdmp.permission('app-user', 'read'), 
+     xdmp.permission('app-user', 'execute') ) );
+
+    "Content Process configurtion complete.";
+}</query><query name="Set Alert CPF Domain" focus="false" active="true" content-source="as:5272100067857847198:" mode="javascript">// The Alerting configuration has to know 
+//  about the CPF Domain so the Alerting
+//  pipeline can invoke the correct action.
+
+// Note: set the Query Console
+//  Content Source to 'bookstore'
+declareUpdate();
+
+if (xdmp.databaseName(xdmp.database()) != "bookstore") {
+  "Please set Content Source to 'bookstore' before running this code."; 
+} else {
+  var alert = require("/MarkLogic/alert.xqy");
+
+  // Alert Config URI
+  var alertUri = "http://marklogic.com/mlu/alert/app/sample/uri"; 
+  
+  // Save the name of the CPF Domain in the 
+  //  "bookstore" database to the Alert Config.
+  // The "bookstore" database was already 
+  //  configured for Content Processing and
+  //  a CPF domain was already created. 
+  //  See the Content Processing Framework
+  //  guide on docs.marklogic.com for more
+  //  information on configuring databases
+  //  for Content Processing.
+  alert.configInsert(
+   alert.configSetCpfDomainNames(
+      alert.configGet(alertUri),
+      ("Alert Book Customers")));
+}
+</query><query name="Final Test" focus="true" active="true" content-source="as:5272100067857847198:" mode="javascript">// Create and insert a final test document. This
+//  will run the CPF pipelines and invoke the
+//  bookstore alert rules.
+
+// Note: set the Query Console
+//  Content Source to 'bookstore'
+
+declareUpdate();
+
+if (xdmp.databaseName(xdmp.database()) != "bookstore") {
+  "Please set Content Source to 'bookstore (file: Samples/alert-app-tutorial/src)' before running this code."; 
+} else {
+  // create an XML document from a string.
+  // xdmp.unquote returns a ValueIterator
+  //  so get the document object from 
+  //  the iterator.
+  var book = xdmp.unquote(
+              ' &lt;book category="english classics"&gt;     \
+                  &lt;isbn&gt;9780451522375&lt;/isbn&gt;           \
+                  &lt;title lang="en"&gt;Billy Budd&lt;/title&gt;  \
+                  &lt;author&gt;Herman Melville&lt;/author&gt;     \
+                  &lt;year&gt;1888&lt;/year&gt;                    \
+                  &lt;price&gt;11.95&lt;/price&gt;                 \
+               &lt;/book&gt;').next().value;
+
+  // get the isbn value from the XML element.
+  var isbn = book.xpath(".//isbn/string()");
+  // get the author value from the XML element.
+  // there could be multiple author elements so
+  //  if there are, get all the values concatenated.
+  var authors = book.xpath(".//author/string()").toArray().join("");
+  // create a URI for this document in the pattern of
+  //  ' /books/&lt;first 10 chars of the author + isbn&gt;.xml '.
+  var uri = authors.substr(0, 10) + isbn
+  // make sure only alphanumeric characters for
+  //  the document name.
+  uri = "/books/" + uri.replace(/[^a-zA-Z0-9]/g, '') + ".xml";
+  
+  xdmp.documentInsert(uri, book);
+
+  "Final Test Complete";
+}
+
+</query></workspace></export>
