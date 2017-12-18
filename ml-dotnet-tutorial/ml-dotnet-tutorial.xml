@@ -1,0 +1,21 @@
+<export><workspace name="dotnet Tutorial Setup"><query name="Insert Documents" focus="true" listorder="1" taborder="1" active="true" database="10844349009644679750" server="3028830625176103659" database-name="Documents" server-name="App-Services" mode="xquery">xquery version "1.0-ml";
+import module namespace search = "http://marklogic.com/appservices/search" at "/MarkLogic/appservices/search/search.xqy"; 
+declare variable $options :=
+&lt;options xmlns="xdmp:document-insert"&gt;  
+  &lt;permissions&gt;{xdmp:default-permissions()}&lt;/permissions&gt;
+  &lt;collections&gt;
+    &lt;collection&gt;dotnet&lt;/collection&gt;
+  &lt;/collections&gt;
+  &lt;quality&gt;0&lt;/quality&gt;
+&lt;/options&gt;;
+
+xdmp:document-insert("/dotnet/doc1.xml",&lt;root&gt;&lt;text&gt;101 dalmatians is a fun story about dogs escaping from the hands of Cruella&lt;/text&gt;&lt;/root&gt;, $options), 
+xdmp:document-insert("/dotnet/doc2.xml",&lt;root&gt;&lt;text&gt;Fun, fun, fun by the Beach Boys&lt;/text&gt;&lt;/root&gt;, $options), 
+xdmp:document-insert("/dotnet/doc3.xml",&lt;root&gt;&lt;text&gt;Dogs are fun&lt;/text&gt;&lt;/root&gt;, $options), 
+xdmp:document-insert("/dotnet/doc4.xml",&lt;root&gt;&lt;text&gt;Fun&lt;/text&gt;&lt;/root&gt;, $options), 
+xdmp:document-insert("/dotnet/doc5.xml",&lt;root&gt;&lt;text&gt;Dogs are fun. Dogs are fun.&lt;/text&gt;&lt;/root&gt;, $options),
+xdmp:document-insert("/dotnet/doc6.txt", text {"Dogs are amazing companions and are very loyal. The are also a lot of fun in the park with frisbees."}, $options),
+xdmp:document-insert("/dotnet/doc7.json", xdmp:unquote('{"root": {"text": "Dogs get used to any name."}}'), $options)
+</query><query name="Delete Documents" focus="false" listorder="5" taborder="5" active="true" database="10844349009644679750" server="3028830625176103659" database-name="" server-name="" mode="xquery">xquery version "1.0-ml";
+
+xdmp:collection-delete("dotnet")</query></workspace></export>

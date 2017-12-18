@@ -1,0 +1,17 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ml-dotnet-tutorial-console", "ml-dotnet-tutorial-console\ml-dotnet-tutorial-console.csproj", "{872746AB-249E-4EE7-B6B9-36363E248227}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{872746AB-249E-4EE7-B6B9-36363E248227}.Debug|x86.ActiveCfg = Debug|x86
+		{872746AB-249E-4EE7-B6B9-36363E248227}.Debug|x86.Build.0 = Debug|x86
+		{872746AB-249E-4EE7-B6B9-36363E248227}.Release|x86.ActiveCfg = Release|x86
+		{872746AB-249E-4EE7-B6B9-36363E248227}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+EndGlobal

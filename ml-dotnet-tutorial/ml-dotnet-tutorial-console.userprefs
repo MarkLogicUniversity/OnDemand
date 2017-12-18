@@ -1,0 +1,14 @@
+﻿<Properties StartupConfiguration="{872746AB-249E-4EE7-B6B9-36363E248227}|Default">
+  <MonoDevelop.Ide.Workbench ActiveDocument="ml-dotnet-tutorial-console/Program.cs">
+    <Files>
+      <File FileName="ml-dotnet-tutorial-console/Program.cs" Line="126" Column="1" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MultiItemStartupConfigurations />
+  <MonoDevelop.Ide.ItemProperties.ml-dotnet-tutorial-console PreferredExecutionTarget="MonoDevelop.Default" />
+</Properties>
