@@ -61,7 +61,7 @@ If an error occurs during a task, you might want to just the 3 Docker containers
 To remove the cluster that was created, even if not all 3 Docker containers were created:  
 
 1. In a command line or terminal prompt, make sure you are in the main project directory, `ml-gradle-tutorial` . 
-2. Type `gradle docker:tearDwonCluster` then press the ENTER key.
+2. Type `gradle docker:tearDownCluster` then press the ENTER key.
 
 Any created Docker artifact (containers, sub-networks, etc.) will be removed.
 
